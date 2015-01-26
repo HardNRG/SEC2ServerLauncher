@@ -1,4 +1,5 @@
 ﻿using CS.MVVM.Commands;
+using FearCombatServerLauncher.Utils;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 
@@ -125,6 +127,7 @@ namespace FearCombatServerLauncher
                         Properties.Settings.Default.Save();
                     }
                 });
+            CheckIfServerIsAccessible = new RelayCommand(o => checkIfServerIsAccessible());
         }
 
         private void load()
@@ -137,7 +140,7 @@ namespace FearCombatServerLauncher
             }
         }
 
-        public void save()
+        private void save()
         {
             var stream = File.Open(FilePath, FileMode.Create);
             var streamWriter = new StreamWriter(stream);
@@ -158,7 +161,7 @@ namespace FearCombatServerLauncher
             stream.Close();
         }
 
-        public void saveAs()
+        private void saveAs()
         {
             SaveFileDialog dialog = new SaveFileDialog();
             if (dialog.ShowDialog() == true)
@@ -168,7 +171,7 @@ namespace FearCombatServerLauncher
             }
         }
 
-        public void start()
+        private void start()
         {
             save();
             var server = new Process();
@@ -178,11 +181,28 @@ namespace FearCombatServerLauncher
             server.Start();
         }
 
+        private void checkIfServerIsAccessible()
+        {
+            var address = WebRequests.GetExternalIP();
+            var port = Items.First(f => f.Name == "Port").Value;
+            var serverList = WebRequests.GetServerList();
+
+            if (serverList.Contains(address.ToString()))
+            {
+                MessageBox.Show(string.Format("Server (IP: {0}) found in master server list!", address.ToString()), "Check successful!");
+            }
+            else
+            {
+                MessageBox.Show(string.Format("Server (IP: {0}) not found in master server list!", address.ToString()), "Check failed!");
+            }
+        }
+
         public RelayCommand Save { get; private set; }
         public RelayCommand SaveAs { get; private set; }
         public RelayCommand Load { get; private set; }
         public RelayCommand Start { get; private set; }
 
         public RelayCommand SetFearServerExePath { get; private set; }
+        public RelayCommand CheckIfServerIsAccessible { get; private set; }
     }
 }
