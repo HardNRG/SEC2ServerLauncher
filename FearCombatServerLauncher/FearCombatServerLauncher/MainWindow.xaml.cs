@@ -23,6 +23,8 @@ namespace FearCombatServerLauncher
         public MainWindow()
         {
             InitializeComponent();
+
+            this.DataContext = new SettingsModel();
         }
     }
 }
