@@ -65,14 +65,7 @@ namespace FearCombatServerLauncher
 
         public SettingsModel()
         {
-            FilePath = "Content/ExampleServerOptions.txt";
-            this.Parse(File.OpenRead(FilePath));
-            InitializeCommands();
-        }
-
-        public SettingsModel(string path)
-        {
-            FilePath = path;
+            FilePath = Properties.Settings.Default.LastOpenedFile;
             this.Parse(File.OpenRead(FilePath));
             InitializeCommands();
         }
@@ -112,6 +105,8 @@ namespace FearCombatServerLauncher
             RaisePropertyChanged("CollectionView");
             streamReader.Close();
             stream.Close();
+            Properties.Settings.Default.LastOpenedFile = FilePath;
+            Properties.Settings.Default.Save();
         }
 
         private void InitializeCommands()
@@ -120,6 +115,16 @@ namespace FearCombatServerLauncher
             SaveAs = new RelayCommand(o => saveAs());
             Load = new RelayCommand(o => load());
             Start = new RelayCommand(o => start());
+            SetFearServerExePath = new RelayCommand(o =>
+                {
+                    OpenFileDialog dialog = new OpenFileDialog();
+                    dialog.FileName = Properties.Settings.Default.FearServerExePath;
+                    if (dialog.ShowDialog() == true)
+                    {
+                        Properties.Settings.Default.FearServerExePath = dialog.FileName;
+                        Properties.Settings.Default.Save();
+                    }
+                });
         }
 
         private void load()
@@ -127,11 +132,8 @@ namespace FearCombatServerLauncher
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == true)
             {
-                if (dialog.CheckFileExists)
-                {
-                    FilePath = dialog.FileName;
-                    this.Parse(File.OpenRead(FilePath));
-                }
+                FilePath = dialog.FileName;
+                this.Parse(File.OpenRead(FilePath));
             }
         }
 
@@ -170,14 +172,17 @@ namespace FearCombatServerLauncher
         {
             save();
             var server = new Process();
-            server.StartInfo.FileName = "FearServer.exe";
-            server.StartInfo.Arguments = string.Format("-optionsfile {0}", FilePath);
+            server.StartInfo.FileName = Properties.Settings.Default.FearServerExePath;
+            server.StartInfo.Arguments = string.Format("-optionsfile \"{0}\"", FilePath);
+            server.StartInfo.WorkingDirectory = Path.GetDirectoryName(Properties.Settings.Default.FearServerExePath);
             server.Start();
         }
 
-        public RelayCommand Save { get; set; }
-        public RelayCommand SaveAs { get; set; }
-        public RelayCommand Load { get; set; }
-        public RelayCommand Start { get; set; }
+        public RelayCommand Save { get; private set; }
+        public RelayCommand SaveAs { get; private set; }
+        public RelayCommand Load { get; private set; }
+        public RelayCommand Start { get; private set; }
+
+        public RelayCommand SetFearServerExePath { get; private set; }
     }
 }

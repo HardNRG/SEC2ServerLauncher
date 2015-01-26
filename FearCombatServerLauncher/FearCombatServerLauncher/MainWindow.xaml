@@ -28,6 +28,7 @@
             <Button Content="Load" Command="{Binding Load}" />
             <Button Content="Save" Command="{Binding Save}" />
             <Button Content="Save As ..." Command="{Binding SaveAs}" />
+            <Button Content="Set FEARServer.exe's path" Command="{Binding SetFearServerExePath}" />
             <Button Content="Start Server" Command="{Binding Start}" />
         </StackPanel>
         

@@ -1,7 +1,15 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="uri:settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="FearCombatServerLauncher.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="LastOpenedFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Content\ExampleServerOptions.txt</Value>
+    </Setting>
+    <Setting Name="FearServerExePath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">FEARServer.exe</Value>
+    </Setting>
+    <Setting Name="ExternalIP" Type="System.String" Scope="User">
+      <Value Profile="(Default)">127.0.0.1</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>
