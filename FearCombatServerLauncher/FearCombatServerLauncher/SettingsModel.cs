@@ -1,11 +1,16 @@
-﻿using System;
+﻿using CS.MVVM.Commands;
+using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Data;
+using System.Windows.Input;
 
 namespace FearCombatServerLauncher
 {
@@ -52,16 +57,24 @@ namespace FearCombatServerLauncher
 
     class SettingsModel : ModelBase
     {
+        public string FilePath { get; private set; }
+
         public ObservableCollection<SettingsItemModel> Items { get; set; }
+
+        public ListCollectionView CollectionView { get; set; }
 
         public SettingsModel()
         {
-            this.Parse(File.OpenRead("Content/ExampleServerOptions.txt"));
+            FilePath = "Content/ExampleServerOptions.txt";
+            this.Parse(File.OpenRead(FilePath));
+            InitializeCommands();
         }
 
         public SettingsModel(string path)
         {
-            this.Parse(File.OpenRead(path));
+            FilePath = path;
+            this.Parse(File.OpenRead(FilePath));
+            InitializeCommands();
         }
 
         public void Parse(Stream stream)
@@ -72,6 +85,7 @@ namespace FearCombatServerLauncher
             while (!streamReader.EndOfStream)
             {
                 var line = streamReader.ReadLine();
+                if (string.IsNullOrWhiteSpace(line)) continue; // this is an empty line
                 var trimmedLine = line.Trim();
                 if (trimmedLine.StartsWith(";")) continue; // this line is a comment
                 if (trimmedLine.StartsWith("[")) // this line is a settings group
@@ -80,6 +94,7 @@ namespace FearCombatServerLauncher
                 }
                 else
                 {
+                    // this is a normal, setting item line
                     var splittedLine = trimmedLine.Split('=');
                     items.Add(new SettingsItemModel()
                     {
@@ -91,6 +106,78 @@ namespace FearCombatServerLauncher
             }
 
             Items = new ObservableCollection<SettingsItemModel>(items);
+
+            CollectionView = new ListCollectionView(Items);
+            CollectionView.GroupDescriptions.Add(new PropertyGroupDescription("Group"));
+            RaisePropertyChanged("CollectionView");
+            streamReader.Close();
+            stream.Close();
         }
+
+        private void InitializeCommands()
+        {
+            Save = new RelayCommand(o => save());
+            SaveAs = new RelayCommand(o => saveAs());
+            Load = new RelayCommand(o => load());
+            Start = new RelayCommand(o => start());
+        }
+
+        private void load()
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                if (dialog.CheckFileExists)
+                {
+                    FilePath = dialog.FileName;
+                    this.Parse(File.OpenRead(FilePath));
+                }
+            }
+        }
+
+        public void save()
+        {
+            var stream = File.Open(FilePath, FileMode.Create);
+            var streamWriter = new StreamWriter(stream);
+            SettingsItemModel prevItem = null;
+            foreach (var item in Items.OrderBy(o => o.Name).OrderBy(o => o.Group))
+            {
+                if (prevItem == null || prevItem.Group != item.Group)
+                {
+                    streamWriter.WriteLine(item.Group);
+                }
+                else
+                {
+                    streamWriter.WriteLine(string.Format("{0}={1}", item.Name, item.Value ?? string.Empty));
+                }
+                prevItem = item;
+            }
+            streamWriter.Close();
+            stream.Close();
+        }
+
+        public void saveAs()
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                FilePath = dialog.FileName;
+                save();
+            }
+        }
+
+        public void start()
+        {
+            save();
+            var server = new Process();
+            server.StartInfo.FileName = "FearServer.exe";
+            server.StartInfo.Arguments = string.Format("-optionsfile {0}", FilePath);
+            server.Start();
+        }
+
+        public RelayCommand Save { get; set; }
+        public RelayCommand SaveAs { get; set; }
+        public RelayCommand Load { get; set; }
+        public RelayCommand Start { get; set; }
     }
 }
